@@ -1,0 +1,114 @@
+/* Tailwind CSS v4 */
+@import "tailwindcss";
+
+/* Tailwind CSS v4 Theme Configuration */
+@theme {
+  --color-primary: #22d3ee;
+  --color-secondary: #0f172a;
+  --color-background: #020617;
+  --color-foreground: #f8fafc;
+  --color-card: rgba(15, 23, 42, 0.82);
+  --color-border: rgba(148, 163, 184, 0.2);
+  --color-accent: #38bdf8;
+  --color-muted: rgba(148, 163, 184, 0.7);
+  --color-destructive: #ef4444;
+  
+  --radius: 0.5rem;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Base Styles */
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background: radial-gradient(circle at 20% 20%, rgba(8, 47, 73, 0.45), transparent 55%),
+              radial-gradient(circle at 80% 0%, rgba(14, 116, 144, 0.35), transparent 45%),
+              var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* Animation Keyframes */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Component Styles */
+@layer components {
+  /* Add custom component styles here */
+}
+
+/* Utility Overrides */
+@layer utilities {
+  /* Add custom utilities here */
+}
+
+/* Animation Keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.message-appear {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 15rem;
+  opacity: 0.03;
+  user-select: none;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.example-card:hover {
+  transform: scale(1.02);
+  transition: transform 0.2s ease;
+}
+
+.typing-dots {
+  animation: pulse 1.5s infinite;
+}
+
+.glass {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.7), rgba(2, 6, 23, 0.6));
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 20px 60px -35px rgba(34, 211, 238, 0.45);
+}
+
+.glass-dark {
+  background: linear-gradient(135deg, rgba(2, 6, 23, 0.85), rgba(8, 47, 73, 0.65));
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  box-shadow: 0 25px 70px -40px rgba(14, 165, 233, 0.55);
+}
