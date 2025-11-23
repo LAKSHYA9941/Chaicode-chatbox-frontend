@@ -25,6 +25,16 @@ export default function AdminPage() {
   const router = useRouter();
   const { user, token, isAuthenticated, loading: authLoading } = useAuth();
 
+  const buildApiUrl = useCallback((path) => {
+    const rawApiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
+    const trimmedApiBase = rawApiBase.replace(/\/$/, '');
+    const apiBaseUrl = /\/api($|\/)/.test(trimmedApiBase)
+      ? trimmedApiBase
+      : `${trimmedApiBase}/api`;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${apiBaseUrl}${normalizedPath}`;
+  }, []);
+
   const isSuperuser = useMemo(() => {
     if (!user) return false;
     return !!user.isSuperuser || user.role === 'superadmin';
@@ -57,7 +67,7 @@ export default function AdminPage() {
 
   const loadCourses = useCallback(async () => {
     try {
-      const res = await fetch('/api/courses');
+      const res = await fetch(buildApiUrl('/courses'));
       const data = await res.json();
       if (res.ok) {
         setCourses(data.courses || []);
@@ -65,7 +75,7 @@ export default function AdminPage() {
     } catch (err) {
       console.warn('Failed to load courses', err);
     }
-  }, []);
+  }, [buildApiUrl]);
 
   useEffect(() => {
     loadCourses();
@@ -73,7 +83,7 @@ export default function AdminPage() {
 
   const loadInsights = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/insights', { headers: jsonHeaders });
+      const res = await fetch(buildApiUrl('/admin/insights'), { headers: jsonHeaders });
       const data = await res.json();
       if (res.ok) {
         setInsights(data);
@@ -83,7 +93,7 @@ export default function AdminPage() {
     } catch (err) {
       setError(err.message);
     }
-  }, [jsonHeaders]);
+  }, [jsonHeaders, buildApiUrl]);
 
   useEffect(() => {
     loadInsights();
@@ -94,7 +104,7 @@ export default function AdminPage() {
       setSubmitting(true);
       setError('');
       try {
-        const res = await fetch('/api/admin/courses', {
+        const res = await fetch(buildApiUrl('/admin/courses'), {
           method: 'POST',
           headers: jsonHeaders,
           body: JSON.stringify(payload),
@@ -111,7 +121,7 @@ export default function AdminPage() {
         setSubmitting(false);
       }
     },
-    [jsonHeaders, loadCourses]
+    [jsonHeaders, loadCourses, buildApiUrl]
   );
 
   const handleDeleteCourse = useCallback(
@@ -123,7 +133,7 @@ export default function AdminPage() {
       setSubmitting(true);
       setError('');
       try {
-        const res = await fetch(`/api/admin/courses/${courseId}`, {
+        const res = await fetch(buildApiUrl(`/admin/courses/${courseId}`), {
           method: 'DELETE',
           headers: jsonHeaders,
         });
@@ -138,7 +148,7 @@ export default function AdminPage() {
         setSubmitting(false);
       }
     },
-    [jsonHeaders, loadCourses]
+    [jsonHeaders, loadCourses, buildApiUrl]
   );
 
   const handleCourseSelection = useCallback((courseId) => {
@@ -178,7 +188,7 @@ export default function AdminPage() {
 
       const authHeaders = token ? { Authorization: `Bearer ${token}` } : undefined;
 
-      const res = await fetch(`/api/admin/ingest/${selectedCourseId}`, {
+      const res = await fetch(buildApiUrl(`/admin/ingest/${selectedCourseId}`), {
         method: 'POST',
         headers: authHeaders,
         body: formData,
@@ -264,9 +274,9 @@ export default function AdminPage() {
   const activeNowUsers = userActivity.activeNow ?? 0;
   const avgMessagesPerCourse = messagesByCourseData.length
     ? Math.round(
-        messagesByCourseData.reduce((sum, entry) => sum + (entry?.messages ?? 0), 0) /
-          messagesByCourseData.length
-      )
+      messagesByCourseData.reduce((sum, entry) => sum + (entry?.messages ?? 0), 0) /
+      messagesByCourseData.length
+    )
     : 0;
   const recentIngestions = (insights?.recentIngestions ?? []).slice(0, 6);
   const signupTrend = (insights?.signupTrend ?? []).slice();
