@@ -14,6 +14,22 @@ const buildApiUrl = (path) => {
   return `${API_BASE_URL}${normalizedPath}`;
 };
 
+const parseApiResponse = async (response) => {
+  const contentType = response.headers.get('content-type') || '';
+
+  if (contentType.toLowerCase().includes('application/json')) {
+    try {
+      return await response.json();
+    } catch (error) {
+      console.error('⚠️ Failed to parse JSON response:', error);
+      return null;
+    }
+  }
+
+  const fallbackText = await response.text();
+  return fallbackText ? { message: fallbackText } : null;
+};
+
 const slugify = (value) => {
   if (!value) return null;
   return value
@@ -130,7 +146,7 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
       console.log('📡 Login response status:', response.status);
 
       if (response.ok) {
@@ -141,8 +157,12 @@ export const AuthProvider = ({ children }) => {
 
         return { success: true, user: data.user, token: data.token };
       } else {
-        console.log('❌ Login failed:', data.message);
-        return { success: false, message: data.message };
+        const fallbackMessage =
+          response.status === 404
+            ? 'Login endpoint not found. Check NEXT_PUBLIC_API_BASE_URL and backend deployment.'
+            : 'Login failed. Please try again.';
+        console.log('❌ Login failed:', data?.message || fallbackMessage);
+        return { success: false, message: data?.message || fallbackMessage };
       }
     } catch (error) {
       console.log('💥 Login network error:', error);
@@ -165,12 +185,12 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ username, email, password, firstname, lastname }),
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
       console.log('📡 Registration response status:', response.status);
 
       if (response.ok) {
         console.log('✅ Registration successful');
-        
+
         // Auto-login after successful registration if rememberMe is enabled
         if (rememberMe) {
           const loginResult = await login(email, password, rememberMe);
@@ -181,8 +201,12 @@ export const AuthProvider = ({ children }) => {
         
         return { success: true, message: data.message };
       } else {
-        console.log('❌ Registration failed:', data.message);
-        return { success: false, message: data.message };
+        const fallbackMessage =
+          response.status === 404
+            ? 'Registration endpoint not found. Check NEXT_PUBLIC_API_BASE_URL and backend deployment.'
+            : 'Registration failed. Please try again.';
+        console.log('❌ Registration failed:', data?.message || fallbackMessage);
+        return { success: false, message: data?.message || fallbackMessage };
       }
     } catch (error) {
       console.log('💥 Registration network error:', error);
