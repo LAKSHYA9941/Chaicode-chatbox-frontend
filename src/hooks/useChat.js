@@ -40,13 +40,24 @@ export const useChat = ({ token, onQuotaChange } = {}) => {
 
     try {
       console.log('🤖 Sending message to AI:', { query, course: courseId });
-      
+
       const config = token
         ? { headers: { Authorization: `Bearer ${token}` } }
         : undefined;
 
+      const rawApiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
+      const trimmedApiBase = rawApiBase.replace(/\/$/, '');
+      const API_BASE_URL = /\/api($|\/)/.test(trimmedApiBase)
+        ? trimmedApiBase
+        : `${trimmedApiBase}/api`;
+
+      const buildApiUrl = (path) => {
+        const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+        return `${API_BASE_URL}${normalizedPath}`;
+      };
+
       const { data } = await axios.post(
-        "/api/ask",
+        buildApiUrl('/ask'),
         {
           query,
           coursename: courseId,
