@@ -17,20 +17,21 @@ function LoginContent() {
   const rememberMeRef = useRef(true);
 
   // Handle Google login success
-  const handleGoogleSuccess = async (credentialResponse) => {
-    console.log('Google login success:', credentialResponse);
-    if (!credentialResponse.credential) {
-      setError('Failed to get credential from Google');
+  const handleGoogleSuccess = async (response) => {
+    console.log('Google login success:', response);
+    if (!response.accessToken && !response.credential) {
+      setError('Failed to get token from Google');
       return;
     }
 
     setIsLoading(true);
     try {
+      // Pass the response object (containing accessToken or credential/idToken)
       const res = await loginWithGoogleIdToken(
-        credentialResponse.credential,
+        response,
         rememberMeRef.current
       );
-      
+
       if (res.success) {
         router.push('/Dashboard');
       } else {
@@ -111,7 +112,7 @@ function LoginContent() {
 
 export default function Login() {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '756674380246-d6e09p1kfk6dca45kmm1gn8nphe137gv.apps.googleusercontent.com';
-  
+
   return (
     <GoogleOAuthProvider clientId={clientId}>
       <LoginContent />

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { GoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin } from "@react-oauth/google";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -43,64 +43,46 @@ export const GoogleAuthButton = ({
   const label =
     text || (mode === "login" ? "Sign in with Google" : "Sign up with Google");
 
-  const handleSuccess = async (credentialResponse) => {
-    try {
-      await onSuccess?.(credentialResponse);
-    } catch (err) {
-      console.error("Google auth success handler error", err);
-    }
-  };
-
-  const handleError = (error) => {
-    if (onError) {
-      onError(error);
-    } else {
+  const login = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      if (onSuccess) {
+        onSuccess({ accessToken: tokenResponse.access_token });
+      }
+    },
+    onError: (error) => {
       console.error("Google auth error", error);
-    }
-  };
+      if (onError) {
+        onError(error);
+      }
+    },
+    flow: 'implicit', // Get access token
+  });
 
   return (
-    <div className={cn("relative w-full", className)}>
-      <div
-        className={cn(
-          "relative z-10 flex h-12 w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white/30 bg-gradient-to-r",
-          "from-white/95 via-sky-100/90 to-white/95 text-sm font-semibold text-slate-900",
-          "shadow-[0_28px_60px_-28px_rgba(56,189,248,0.75)] transition",
-          "hover:-translate-y-0.5 hover:shadow-[0_30px_68px_-26px_rgba(56,189,248,0.9)]",
-          "pointer-events-none",
-          loading && "opacity-90"
-        )}
-      >
-        <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-[0_12px_24px_-18px_rgba(15,23,42,0.6)]">
-          <GoogleGlyph />
-        </span>
-        <span className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-700">
-          {label}
-        </span>
-        {loading && (
-          <Loader2 className="absolute right-4 h-4 w-4 animate-spin text-slate-500" />
-        )}
-      </div>
-
-      <div
-        className={cn(
-          "absolute inset-0 opacity-0",
-          loading ? "pointer-events-none" : "pointer-events-auto"
-        )}
-      >
-        <GoogleLogin
-          onSuccess={handleSuccess}
-          onError={handleError}
-          useOneTap
-          auto_select
-          text="continue_with"
-          shape="rectangular"
-          theme="outline"
-          size="large"
-          width="100%"
-        />
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={() => login()}
+      disabled={loading}
+      className={cn(
+        "relative flex h-12 w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white/30 bg-gradient-to-r",
+        "from-white/95 via-sky-100/90 to-white/95 text-sm font-semibold text-slate-900",
+        "shadow-[0_28px_60px_-28px_rgba(56,189,248,0.75)] transition-all duration-300",
+        "hover:-translate-y-1 hover:shadow-[0_30px_68px_-26px_rgba(56,189,248,0.9)] hover:bg-white",
+        "active:translate-y-0 active:shadow-none",
+        "disabled:opacity-70 disabled:cursor-not-allowed",
+        className
+      )}
+    >
+      <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)]">
+        <GoogleGlyph />
+      </span>
+      <span className="text-xs font-bold uppercase tracking-[0.2em] text-slate-700">
+        {label}
+      </span>
+      {loading && (
+        <Loader2 className="absolute right-4 h-4 w-4 animate-spin text-slate-500" />
+      )}
+    </button>
   );
 };
 

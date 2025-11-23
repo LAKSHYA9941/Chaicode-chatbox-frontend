@@ -66,13 +66,13 @@ export const AuthProvider = ({ children }) => {
    * Storage utility functions for handling both localStorage and sessionStorage
    */
   const getStorageType = (rememberMe) => rememberMe ? localStorage : sessionStorage;
-  
+
   const setAuthData = (token, user, rememberMe = false) => {
     const storage = getStorageType(rememberMe);
     storage.setItem('token', token);
     storage.setItem('user', JSON.stringify(user));
     storage.setItem('rememberMe', rememberMe.toString());
-    
+
     // Clear data from the other storage type
     const otherStorage = rememberMe ? sessionStorage : localStorage;
     otherStorage.removeItem('token');
@@ -143,7 +143,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password, rememberMe = false) => {
     try {
       console.log('🔐 Attempting login for:', email, rememberMe ? '(Remember Me enabled)' : '');
-      
+
       const response = await fetch(buildApiUrl('/auth/login'), {
         method: 'POST',
         headers: {
@@ -182,7 +182,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (username, email, password, firstname, lastname, rememberMe = false) => {
     try {
       console.log('📝 Attempting registration for:', { username, email, firstname, lastname });
-      
+
       const response = await fetch(buildApiUrl('/auth/register'), {
         method: 'POST',
         headers: {
@@ -204,7 +204,7 @@ export const AuthProvider = ({ children }) => {
             return { success: true, message: 'Account created and logged in successfully!', user: loginResult.user };
           }
         }
-        
+
         return { success: true, message: data.message };
       } else {
         const fallbackMessage =
@@ -228,7 +228,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setToken(null);
     clearAuthData();
-    
+
     // Redirect to login page
     window.location.href = '/Login';
   };
@@ -238,7 +238,7 @@ export const AuthProvider = ({ children }) => {
    */
   const getUserDisplayName = () => {
     if (!user) return 'User';
-    
+
     if (user.firstname && user.lastname) {
       return `${user.firstname} ${user.lastname}`;
     } else if (user.username) {
@@ -259,16 +259,20 @@ export const AuthProvider = ({ children }) => {
     getUserSlug: buildUserSlug,
     isAuthenticated: !!token,
     // Google Login: exchange Google ID token for backend JWT
-    loginWithGoogleIdToken: async (idToken, rememberMe = true) => {
+    loginWithGoogleIdToken: async (tokenOrPayload, rememberMe = true) => {
       try {
-        if (!idToken) {
-          return { success: false, message: 'Missing Google ID token' };
+        if (!tokenOrPayload) {
+          return { success: false, message: 'Missing Google token' };
         }
+
+        const payload = typeof tokenOrPayload === 'string'
+          ? { idToken: tokenOrPayload }
+          : tokenOrPayload;
 
         const response = await fetch(buildApiUrl('/oauth/google'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken })
+          body: JSON.stringify(payload)
         });
 
         const data = await parseApiResponse(response);
