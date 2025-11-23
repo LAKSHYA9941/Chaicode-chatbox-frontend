@@ -7,7 +7,13 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || '/api').replace(/\/$/, '');
+const rawApiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
+const trimmedApiBase = rawApiBase.replace(/\/$/, '');
+const API_BASE_URL = /\/api($|\/)/.test(trimmedApiBase)
+  ? trimmedApiBase
+  : `${trimmedApiBase}/api`;
+
+console.log('🔧 Using API Base URL:', API_BASE_URL);
 
 const buildApiUrl = (path) => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
@@ -255,22 +261,34 @@ export const AuthProvider = ({ children }) => {
     // Google Login: exchange Google ID token for backend JWT
     loginWithGoogleIdToken: async (idToken, rememberMe = true) => {
       try {
-        if (!idToken) return { success: false, message: 'Missing Google ID token' };
-        const response = await fetch('/api/oauth/google', {
+        if (!idToken) {
+          return { success: false, message: 'Missing Google ID token' };
+        }
+
+        const response = await fetch(buildApiUrl('/oauth/google'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken })
         });
-        const data = await response.json();
+
+        const data = await parseApiResponse(response);
+
         if (response.ok && data?.token && data?.user) {
           setToken(data.token);
           setUser(data.user);
           setAuthData(data.token, data.user, rememberMe);
           return { success: true, user: data.user, token: data.token };
         }
-        return { success: false, message: data?.message || 'Google login failed' };
-      } catch (e) {
-        return { success: false, message: e.message || 'Google login error' };
+
+        const fallbackMessage =
+          response.status === 404
+            ? 'Google login endpoint not found. Check NEXT_PUBLIC_API_BASE_URL and backend deployment.'
+            : 'Google login failed. Please try again.';
+
+        return { success: false, message: data?.message || fallbackMessage };
+      } catch (error) {
+        console.error('💥 Google login error:', error);
+        return { success: false, message: error?.message || 'Google login error' };
       }
     }
   };
